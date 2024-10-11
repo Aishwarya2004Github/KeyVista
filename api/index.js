@@ -64,11 +64,6 @@ if (!fs.existsSync('uploads')) {
   fs.mkdirSync('uploads');
 }
 
-// Routes
-app.use('/api/user', verifyJWT, userRouter); // Protect user routes with JWT
-app.use('/api/auth', authRouter); // Auth routes don't require JWT
-app.use('/api/listing', listingRouter); // You can also protect listing routes if needed
-
 // Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -87,8 +82,9 @@ app.post('/api/user/upload', verifyJWT, upload.single('avatar'), (req, res) => {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
 
-  const filePath = `/uploads/${req.file.filename}`;
-  res.json({ success: true, filePath: `https://keyvista.onrender.com${filePath}` });
+  // Construct the correct HTTPS file path
+  const filePath = `https://keyvista.onrender.com/uploads/${req.file.filename}`;
+  res.json({ success: true, filePath });
 });
 
 app.post('/api/uploads', verifyJWT, upload.array('images', 6), (req, res) => { // Protect this route
