@@ -36,7 +36,7 @@ export default function CreateListing() {
       }
 
       try {
-        const res = await fetch('https://keyvista.onrender.com/api/uploads', {
+        const res = await fetch('/api/uploads', {
           method: 'POST',
           body: formDataToUpload,
         });
@@ -110,7 +110,7 @@ export default function CreateListing() {
         return setError('Discount price must be lower than regular price');
       setLoading(true);
       setError(false);
-      const res = await fetch('https://keyvista.onrender.com/api/listing/create', {
+      const res = await fetch('/api/listing/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

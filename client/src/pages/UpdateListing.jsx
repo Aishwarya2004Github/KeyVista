@@ -51,7 +51,7 @@ export default function CreateListing() {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('https://keyvista.onrender.com/api/upload', {
+    const response = await fetch('/api/upload', {
       method: 'POST',
       body: formData,
     });
@@ -90,7 +90,7 @@ export default function CreateListing() {
       
       setLoading(true);
       setError(false);
-      const res = await fetch(`https://keyvista.onrender.com/api/listing/update/${params.listingId}`, {
+      const res = await fetch(`/api/listing/update/${params.listingId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
