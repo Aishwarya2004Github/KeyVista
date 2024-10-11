@@ -10,7 +10,6 @@ import cors from 'cors';
 import path from 'path';
 import jwt from 'jsonwebtoken'; // Import jsonwebtoken
 import { errorHandler } from './middleware/errorHandler.js'; // Error handler middleware
-import { verifyJWT } from './middleware/authMiddleware.js'; // JWT verification middleware
 
 dotenv.config(); // Load environment variables
 const PORT = process.env.PORT || 5000;
@@ -40,10 +39,10 @@ app.use(cookieParser()); // For parsing cookies
 
 // JWT Helper for Signing Tokens
 const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET); // Removed expiresIn
 };
 
-// JWT Verification Middleware with better error handling
+// JWT Verification Middleware
 const verifyJWT = (req, res, next) => {
   const token = req.cookies.token || req.headers['authorization']?.split(' ')[1];
   if (!token) {
@@ -55,9 +54,6 @@ const verifyJWT = (req, res, next) => {
     req.user = decoded; // Store user data in req object
     next();
   } catch (err) {
-    if (err.name === 'TokenExpiredError') {
-      return res.status(403).json({ message: 'Token expired. Please log in again.' });
-    }
     return res.status(401).json({ message: 'Invalid token.' });
   }
 };
@@ -70,10 +66,10 @@ app.use('/api/listing', listingRouter); // You can also protect listing routes i
 // Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-      cb(null, 'uploads/'); // Directory where files will be stored
+    cb(null, 'uploads/'); // Directory where files will be stored
   },
   filename: (req, file, cb) => {
-      cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
   },
 });
 
