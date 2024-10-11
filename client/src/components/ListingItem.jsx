@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { MdLocationOn } from 'react-icons/md';
 
@@ -8,7 +9,7 @@ export default function ListingItem({ listing }) {
   // Ensure the image URLs are formatted correctly
   const imageUrl =
     listing.imageUrls && listing.imageUrls.length > 0
-      ? listing.imageUrls[0]
+      ? listing.imageUrls[0] // Use the first image URL
       : 'https://53.fs1.hubspotusercontent-na1.net/hub/53/hubfs/Sales_Blog/real-estate-business-compressor.jpg?width=595&height=400&name=real-estate-business-compressor.jpg';
 
   return (
@@ -36,7 +37,7 @@ export default function ListingItem({ listing }) {
           <p className='text-sm text-gray-600 line-clamp-2'>
             {listing.description}
           </p>
-          <p className='text-slate-500 mt-2 font-semibold '>
+          <p className='text-slate-500 mt-2 font-semibold'>
             $
             {listing.offer
               ? listing.discountPrice.toLocaleString('en-US')
