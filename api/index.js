@@ -8,8 +8,8 @@ import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import cors from 'cors';
 import path from 'path';
-import jwt from 'jsonwebtoken'; // Import jsonwebtoken
-import { errorHandler } from './middleware/errorHandler.js'; // Error handler middleware
+import jwt from 'jsonwebtoken';
+import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config(); // Load environment variables
 const PORT = process.env.PORT || 5000;
@@ -29,7 +29,7 @@ const __dirname = path.resolve(); // Get the current directory
 const app = express();
 
 app.use(cors({
-  origin: 'https://keyvista.onrender.com', // Adjust according to your frontend URL
+  origin: 'http://localhost:5000', // Adjust according to your frontend URL
   credentials: true, // Allow credentials like cookies
 }));
 
@@ -75,6 +75,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// Ensure the uploads directory exists
+if (!fs.existsSync('uploads')) {
+  fs.mkdirSync('uploads');
+}
+
 // File upload routes
 app.post('/api/user/upload', verifyJWT, upload.single('avatar'), (req, res) => { // Protect this route
   if (!req.file) {
@@ -90,19 +95,19 @@ app.post('/api/uploads', verifyJWT, upload.array('images', 6), (req, res) => { /
     return res.status(400).json({ success: false, message: 'No files uploaded' });
   }
 
-  const imageUrls = req.files.map(file => `https://keyvista.onrender.com/uploads/${file.filename}`);
+  const imageUrls = req.files.map(file => `http://localhost:5000/uploads/${file.filename}`);
   res.json({ success: true, imageUrls });
 });
 
 // Serve static files from the uploads directory
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, "uploads")));
 
 // Serve static files for the client
 app.use(express.static(path.join(__dirname, '/client/dist')));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 // Catch-all route for SPA (Single Page Application)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname,"uploads", 'client', 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname,"/client/dist", "index.html"));
 });
 
 // Error handler middleware (should be placed after all routes)
