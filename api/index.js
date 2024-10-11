@@ -30,7 +30,7 @@ const __dirname = path.resolve(); // Get the current directory
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5000', // Adjust according to your frontend URL
+  origin: 'https://keyvista.onrender.com', // Adjust according to your frontend URL
   credentials: true, // Allow credentials like cookies
 }));
 
@@ -96,7 +96,7 @@ app.post('/api/uploads', verifyJWT, upload.array('images', 6), (req, res) => { /
     return res.status(400).json({ success: false, message: 'No files uploaded' });
   }
 
-  const imageUrls = req.files.map(file => `http://localhost:5000/uploads/${file.filename}`);
+  const imageUrls = req.files.map(file => `https://keyvista.onrender.com/uploads/${file.filename}`);
   res.json({ success: true, imageUrls });
 });
 
