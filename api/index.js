@@ -5,10 +5,12 @@ import userRouter from './routes/user.route.js';
 import authRouter from './routes/auth.route.js';
 import listingRouter from './routes/listing.route.js';
 import cookieParser from 'cookie-parser';
-import multer from 'multer'; // Use import instead of require
+import multer from 'multer';
 import cors from 'cors';
 import path from 'path';
+import jwt from 'jsonwebtoken'; // Import jsonwebtoken
 import { errorHandler } from './middleware/errorHandler.js'; // Error handler middleware
+import { verifyJWT } from './middleware/authMiddleware.js'; // JWT verification middleware
 
 dotenv.config(); // Load environment variables
 const router = express.Router();
@@ -36,10 +38,31 @@ app.use(cors({
 app.use(express.json()); // For parsing application/json
 app.use(cookieParser()); // For parsing cookies
 
+// JWT Helper for Signing Tokens
+const generateToken = (userId) => {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
+};
+
+// JWT Verification Middleware
+const verifyJWT = (req, res, next) => {
+  const token = req.cookies.token || req.headers['authorization']?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ message: 'Access denied. No token provided.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // Store user data in req object
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: 'Invalid token.' });
+  }
+};
+
 // Routes
-app.use('/api/user', userRouter);
-app.use('/api/auth', authRouter);
-app.use('/api/listing', listingRouter);
+app.use('/api/user', verifyJWT, userRouter); // Protect user routes with JWT
+app.use('/api/auth', authRouter); // Auth routes don't require JWT
+app.use('/api/listing', listingRouter); // You can also protect listing routes if needed
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
@@ -53,7 +76,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 // Inside your Express app definition
-app.post('/api/user/upload', upload.single('avatar'), (req, res) => {
+app.post('/api/user/upload', verifyJWT, upload.single('avatar'), (req, res) => { // Protect this route
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
@@ -63,7 +86,7 @@ app.post('/api/user/upload', upload.single('avatar'), (req, res) => {
 });
 
 // API endpoint for file uploads
-app.post('/api/uploads', upload.array('images', 6), (req, res) => {
+app.post('/api/uploads', verifyJWT, upload.array('images', 6), (req, res) => { // Protect this route
   if (!req.files || req.files.length === 0) {
       return res.status(400).json({ success: false, message: 'No files uploaded' });
   }
