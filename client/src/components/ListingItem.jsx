@@ -2,16 +2,26 @@ import { Link } from 'react-router-dom';
 import { MdLocationOn } from 'react-icons/md';
 
 export default function ListingItem({ listing }) {
+  // Debugging: log the listing data to the console
+  console.log(listing);
+
+  // Ensure the image URLs are formatted correctly
+  const imageUrl =
+    listing.imageUrls && listing.imageUrls.length > 0
+      ? listing.imageUrls[0]
+      : 'https://53.fs1.hubspotusercontent-na1.net/hub/53/hubfs/Sales_Blog/real-estate-business-compressor.jpg?width=595&height=400&name=real-estate-business-compressor.jpg';
+
   return (
     <div className='bg-white shadow-md hover:shadow-lg transition-shadow overflow-hidden rounded-lg w-full sm:w-[330px]'>
       <Link to={`/listing/${listing._id}`}>
         <img
-          src={
-            listing.imageUrls[0] ||
-            'https://53.fs1.hubspotusercontent-na1.net/hub/53/hubfs/Sales_Blog/real-estate-business-compressor.jpg?width=595&height=400&name=real-estate-business-compressor.jpg'
-          }
+          src={imageUrl}
           alt='listing cover'
           className='h-[320px] sm:h-[220px] w-full object-cover hover:scale-105 transition-scale duration-300'
+          onError={(e) => {
+            e.target.onerror = null; // Prevents looping
+            e.target.src = 'https://via.placeholder.com/320'; // Placeholder for broken images
+          }}
         />
         <div className='p-3 flex flex-col gap-2 w-full'>
           <p className='truncate text-lg font-semibold text-slate-700'>

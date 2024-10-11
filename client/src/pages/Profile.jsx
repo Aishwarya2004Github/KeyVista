@@ -18,9 +18,8 @@ export default function Profile() {
   const [file, setFile] = useState(undefined);
   const [formData, setFormData] = useState({});
   const [updateSuccess, setUpdateSuccess] = useState(false);
-  const [showListingsError, setShowListingsError] = useState(false);
-  const [userListings, setUserListings] = useState([]);
-  const [isFetchingListings, setIsFetchingListings] = useState(false); // Track fetching state
+  const [showListingsError, setShowListingsError] = useState(false); // Add this line
+  const [userListings, setUserListings] = useState([]); // Add this line for user listings
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -39,6 +38,12 @@ export default function Profile() {
         body: formData,
       });
   
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await res.text();
+        throw new Error(`Unexpected response: ${text}`);
+      }
+  
       const data = await res.json();
   
       if (data.success) {
@@ -50,6 +55,7 @@ export default function Profile() {
       console.error('Error uploading file:', error);
     }
   };
+  
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -57,6 +63,7 @@ export default function Profile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Ensure avatar URL is included in formData
     const updatedData = { ...formData, avatar: formData.avatar || currentUser.avatar };
     
     try {
@@ -66,7 +73,7 @@ export default function Profile() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updatedData),
+        body: JSON.stringify(updatedData), // Use updatedData
       });
       const data = await res.json();
       if (data.success === false) {
@@ -80,6 +87,8 @@ export default function Profile() {
       dispatch(updateUserFailure(error.message));
     }
   };
+  
+  
 
   const handleDeleteUser = async () => {
     try {
@@ -109,25 +118,23 @@ export default function Profile() {
       }
       dispatch(deleteUserSuccess(data));
     } catch (error) {
-      dispatch(deleteUserFailure(error.message));
+      dispatch(deleteUserFailure(data.message));
     }
   };
 
   const handleShowListings = async () => {
-    setIsFetchingListings(true); // Start loading state
-    setShowListingsError(false);
     try {
+      setShowListingsError(false);
       const res = await fetch(`https://keyvista.onrender.com/api/user/listings/${currentUser._id}`);
       const data = await res.json();
       if (data.success === false) {
         setShowListingsError(true);
         return;
       }
+
       setUserListings(data);
     } catch (error) {
       setShowListingsError(true);
-    } finally {
-      setIsFetchingListings(false); // End loading state
     }
   };
 
@@ -141,12 +148,14 @@ export default function Profile() {
         console.log(data.message);
         return;
       }
-      setUserListings((prev) => prev.filter((listing) => listing._id !== listingId));
+
+      setUserListings((prev) =>
+        prev.filter((listing) => listing._id !== listingId)
+      );
     } catch (error) {
       console.log(error.message);
     }
   };
-
   const isDarkMode = false;
   return (
     <div className='p-3 max-w-lg mx-auto'>
@@ -215,16 +224,16 @@ export default function Profile() {
 
       <p className='text-red-700 mt-5'>{error ? error : ''}</p>
       <p className='text-green-700 mt-5'>
-        {updateSuccess ? 'User updated successfully!' : ''}
+        {updateSuccess ? 'User is updated successfully!' : ''}
       </p>
       <button onClick={handleShowListings} className='text-green-700 w-full'>
-        {isFetchingListings ? 'Loading Listings...' : 'Show Listings'}
+        Show Listings
       </button>
       <p className='text-red-700 mt-5'>
         {showListingsError ? 'Error showing listings' : ''}
       </p>
 
-      {userListings.length > 0 ? (
+      {userListings && userListings.length > 0 && (
         <div className='flex flex-col gap-4'>
           <h1 className='text-center mt-7 text-2xl font-semibold'>
             Your Listings
@@ -242,26 +251,26 @@ export default function Profile() {
                 />
               </Link>
               <Link
-                className='text-slate-700 font-semibold hover:underline truncate flex-1'
+                className='text-slate-700 font-semibold  hover:underline truncate flex-1'
                 to={`/listing/${listing._id}`}
               >
                 <p>{listing.name}</p>
               </Link>
 
-              <div className='flex flex-col gap-1'>
-                <span className='text-sm text-gray-500'>{listing.date}</span>
-                <span
+              <div className='flex flex-col item-center'>
+                <button
                   onClick={() => handleListingDelete(listing._id)}
-                  className='text-red-700 cursor-pointer hover:underline'
+                  className='text-red-700 uppercase'
                 >
                   Delete
-                </span>
+                </button>
+                <Link to={`/update-listing/${listing._id}`}>
+                  <button className='text-green-700 uppercase'>Edit</button>
+                </Link>
               </div>
             </div>
           ))}
         </div>
-      ) : (
-        <p className='text-center mt-5'>No Listings Available</p>
       )}
     </div>
   );
