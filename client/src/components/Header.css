@@ -1,0 +1,12 @@
+/* Global styles for light and dark themes */
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  body.dark {
+    background-color: #1f2937; /* Dark background */
+    color: #f9fafb; /* Light text color */
+  }
+  
+  /* Additional styles for header and other components as needed */
+  
