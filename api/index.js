@@ -13,7 +13,6 @@ import { errorHandler } from './middleware/errorHandler.js'; // Error handler mi
 import { verifyJWT } from './middleware/authMiddleware.js'; // JWT verification middleware
 
 dotenv.config(); // Load environment variables
-const router = express.Router();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
@@ -32,6 +31,7 @@ const app = express();
 
 app.use(cors({
   origin: 'https://keyvista.onrender.com', // Adjust according to your frontend URL
+  credentials: true, // Allow credentials like cookies
 }));
 
 // Middlewares
@@ -43,7 +43,7 @@ const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '1h' });
 };
 
-// JWT Verification Middleware
+// JWT Verification Middleware with better error handling
 const verifyJWT = (req, res, next) => {
   const token = req.cookies.token || req.headers['authorization']?.split(' ')[1];
   if (!token) {
@@ -55,6 +55,9 @@ const verifyJWT = (req, res, next) => {
     req.user = decoded; // Store user data in req object
     next();
   } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(403).json({ message: 'Token expired. Please log in again.' });
+    }
     return res.status(401).json({ message: 'Invalid token.' });
   }
 };
@@ -75,20 +78,20 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-// Inside your Express app definition
+
+// File upload routes
 app.post('/api/user/upload', verifyJWT, upload.single('avatar'), (req, res) => { // Protect this route
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
 
-  const filePath = `/uploads/${req.file.filename}`; // Adjust if needed
+  const filePath = `/uploads/${req.file.filename}`;
   res.json({ success: true, filePath });
 });
 
-// API endpoint for file uploads
 app.post('/api/uploads', verifyJWT, upload.array('images', 6), (req, res) => { // Protect this route
   if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ success: false, message: 'No files uploaded' });
+    return res.status(400).json({ success: false, message: 'No files uploaded' });
   }
 
   const imageUrls = req.files.map(file => `https://keyvista.onrender.com/uploads/${file.filename}`);
