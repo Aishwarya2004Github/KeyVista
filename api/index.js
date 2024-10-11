@@ -10,6 +10,7 @@ import cors from 'cors';
 import path from 'path';
 import jwt from 'jsonwebtoken';
 import { errorHandler } from './middleware/errorHandler.js';
+import fs from 'fs'; // Import fs to check for uploads directory
 
 dotenv.config(); // Load environment variables
 const PORT = process.env.PORT || 5000;
@@ -58,6 +59,11 @@ const verifyJWT = (req, res, next) => {
   }
 };
 
+// Ensure the uploads directory exists
+if (!fs.existsSync('uploads')) {
+  fs.mkdirSync('uploads');
+}
+
 // Routes
 app.use('/api/user', verifyJWT, userRouter); // Protect user routes with JWT
 app.use('/api/auth', authRouter); // Auth routes don't require JWT
@@ -74,11 +80,6 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-
-// Ensure the uploads directory exists
-if (!fs.existsSync('uploads')) {
-  fs.mkdirSync('uploads');
-}
 
 // File upload routes
 app.post('/api/user/upload', verifyJWT, upload.single('avatar'), (req, res) => { // Protect this route
