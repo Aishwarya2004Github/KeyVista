@@ -10,7 +10,7 @@ import cors from 'cors';
 import path from 'path';
 import jwt from 'jsonwebtoken';
 import { errorHandler } from './middleware/errorHandler.js';
-import fs from 'fs';
+import fs from 'fs'; // Import fs to check for uploads directory
 
 dotenv.config(); // Load environment variables
 const PORT = process.env.PORT || 5000;
@@ -22,13 +22,13 @@ mongoose
     console.log('Connected to MongoDB!');
   })
   .catch((err) => {
-    console.log(err);
+    console.error(err);
   });
 
 const __dirname = path.resolve(); // Get the current directory
+
 const app = express();
 
-// CORS configuration
 app.use(cors({
   origin: 'https://keyvista.onrender.com', // Adjust according to your frontend URL
   credentials: true, // Allow credentials like cookies
@@ -65,9 +65,9 @@ if (!fs.existsSync('uploads')) {
 }
 
 // Routes
-app.use('/api/user', verifyJWT, userRouter);
-app.use('/api/auth', authRouter);
-app.use('/api/listing', listingRouter);
+app.use('/api/user', verifyJWT, userRouter); // Protect user routes with JWT
+app.use('/api/auth', authRouter); // Auth routes don't require JWT
+app.use('/api/listing', listingRouter); // You can also protect listing routes if needed
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
@@ -82,21 +82,24 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // File upload routes
-app.post('/api/user/upload', verifyJWT, upload.single('avatar'), (req, res) => {
+app.post('/api/user/upload', verifyJWT, upload.single('avatar'), (req, res) => { // Protect this route
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
 
   const filePath = `/uploads/${req.file.filename}`;
-  res.json({ success: true, filePath });
+  res.json({ success: true, filePath: `https://keyvista.onrender.com${filePath}` });
 });
 
-app.post('/api/uploads', verifyJWT, upload.array('images', 6), (req, res) => {
+app.post('/api/uploads', verifyJWT, upload.array('images', 6), (req, res) => { // Protect this route
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ success: false, message: 'No files uploaded' });
   }
 
-  const imageUrls = req.files.map(file => `https://keyvista.onrender.com/uploads/${file.filename}`);
+  const imageUrls = req.files.map(file => 
+    `https://keyvista.onrender.com/uploads/${file.filename}`
+  );
+  
   res.json({ success: true, imageUrls });
 });
 
@@ -111,7 +114,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, "client", "dist", "index.html"));
 });
 
-// Error handler middleware
+// Error handler middleware (should be placed after all routes)
 app.use(errorHandler);
 
 // Start the server
