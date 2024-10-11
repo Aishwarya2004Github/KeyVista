@@ -18,8 +18,9 @@ export default function Profile() {
   const [file, setFile] = useState(undefined);
   const [formData, setFormData] = useState({});
   const [updateSuccess, setUpdateSuccess] = useState(false);
-  const [showListingsError, setShowListingsError] = useState(false); // Add this line
-  const [userListings, setUserListings] = useState([]); // Add this line for user listings
+  const [showListingsError, setShowListingsError] = useState(false);
+  const [userListings, setUserListings] = useState([]);
+  const [isFetchingListings, setIsFetchingListings] = useState(false); // Track fetching state
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -33,16 +34,10 @@ export default function Profile() {
     formData.append('avatar', file);
   
     try {
-      const res = await fetch('/api/user/upload', {
+      const res = await fetch('https://keyvista.onrender.com/api/user/upload', {
         method: 'POST',
         body: formData,
       });
-  
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await res.text();
-        throw new Error(`Unexpected response: ${text}`);
-      }
   
       const data = await res.json();
   
@@ -55,7 +50,6 @@ export default function Profile() {
       console.error('Error uploading file:', error);
     }
   };
-  
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -63,17 +57,16 @@ export default function Profile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Ensure avatar URL is included in formData
     const updatedData = { ...formData, avatar: formData.avatar || currentUser.avatar };
     
     try {
       dispatch(updateUserStart());
-      const res = await fetch(`/api/user/update/${currentUser._id}`, {
+      const res = await fetch(`https://keyvista.onrender.com/api/user/update/${currentUser._id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updatedData), // Use updatedData
+        body: JSON.stringify(updatedData),
       });
       const data = await res.json();
       if (data.success === false) {
@@ -87,13 +80,11 @@ export default function Profile() {
       dispatch(updateUserFailure(error.message));
     }
   };
-  
-  
 
   const handleDeleteUser = async () => {
     try {
       dispatch(deleteUserStart());
-      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
+      const res = await fetch(`https://keyvista.onrender.com/api/user/delete/${currentUser._id}`, {
         method: 'DELETE',
       });
       const data = await res.json();
@@ -110,7 +101,7 @@ export default function Profile() {
   const handleSignOut = async () => {
     try {
       dispatch(signOutUserStart());
-      const res = await fetch('/api/auth/signout');
+      const res = await fetch('https://keyvista.onrender.com/api/auth/signout');
       const data = await res.json();
       if (data.success === false) {
         dispatch(deleteUserFailure(data.message));
@@ -118,29 +109,31 @@ export default function Profile() {
       }
       dispatch(deleteUserSuccess(data));
     } catch (error) {
-      dispatch(deleteUserFailure(data.message));
+      dispatch(deleteUserFailure(error.message));
     }
   };
 
   const handleShowListings = async () => {
+    setIsFetchingListings(true); // Start loading state
+    setShowListingsError(false);
     try {
-      setShowListingsError(false);
-      const res = await fetch(`/api/user/listings/${currentUser._id}`);
+      const res = await fetch(`https://keyvista.onrender.com/api/user/listings/${currentUser._id}`);
       const data = await res.json();
       if (data.success === false) {
         setShowListingsError(true);
         return;
       }
-
       setUserListings(data);
     } catch (error) {
       setShowListingsError(true);
+    } finally {
+      setIsFetchingListings(false); // End loading state
     }
   };
 
   const handleListingDelete = async (listingId) => {
     try {
-      const res = await fetch(`/api/listing/delete/${listingId}`, {
+      const res = await fetch(`https://keyvista.onrender.com/api/listing/delete/${listingId}`, {
         method: 'DELETE',
       });
       const data = await res.json();
@@ -148,14 +141,12 @@ export default function Profile() {
         console.log(data.message);
         return;
       }
-
-      setUserListings((prev) =>
-        prev.filter((listing) => listing._id !== listingId)
-      );
+      setUserListings((prev) => prev.filter((listing) => listing._id !== listingId));
     } catch (error) {
       console.log(error.message);
     }
   };
+
   const isDarkMode = false;
   return (
     <div className='p-3 max-w-lg mx-auto'>
@@ -224,16 +215,16 @@ export default function Profile() {
 
       <p className='text-red-700 mt-5'>{error ? error : ''}</p>
       <p className='text-green-700 mt-5'>
-        {updateSuccess ? 'User is updated successfully!' : ''}
+        {updateSuccess ? 'User updated successfully!' : ''}
       </p>
       <button onClick={handleShowListings} className='text-green-700 w-full'>
-        Show Listings
+        {isFetchingListings ? 'Loading Listings...' : 'Show Listings'}
       </button>
       <p className='text-red-700 mt-5'>
         {showListingsError ? 'Error showing listings' : ''}
       </p>
 
-      {userListings && userListings.length > 0 && (
+      {userListings.length > 0 ? (
         <div className='flex flex-col gap-4'>
           <h1 className='text-center mt-7 text-2xl font-semibold'>
             Your Listings
@@ -251,26 +242,26 @@ export default function Profile() {
                 />
               </Link>
               <Link
-                className='text-slate-700 font-semibold  hover:underline truncate flex-1'
+                className='text-slate-700 font-semibold hover:underline truncate flex-1'
                 to={`/listing/${listing._id}`}
               >
                 <p>{listing.name}</p>
               </Link>
 
-              <div className='flex flex-col item-center'>
-                <button
+              <div className='flex flex-col gap-1'>
+                <span className='text-sm text-gray-500'>{listing.date}</span>
+                <span
                   onClick={() => handleListingDelete(listing._id)}
-                  className='text-red-700 uppercase'
+                  className='text-red-700 cursor-pointer hover:underline'
                 >
                   Delete
-                </button>
-                <Link to={`/update-listing/${listing._id}`}>
-                  <button className='text-green-700 uppercase'>Edit</button>
-                </Link>
+                </span>
               </div>
             </div>
           ))}
         </div>
+      ) : (
+        <p className='text-center mt-5'>No Listings Available</p>
       )}
     </div>
   );

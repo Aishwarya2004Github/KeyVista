@@ -20,15 +20,16 @@ export default function CreateListing() {
     parking: false,
     furnished: false,
   });
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
       const listingId = params.listingId;
       const res = await fetch(`/api/listing/get/${listingId}`);
       const data = await res.json();
-      if (data.success === false) {
+      if (!data.success) {
         console.log(data.message);
         return;
       }
@@ -39,26 +40,37 @@ export default function CreateListing() {
   }, [params.listingId]);
 
   const handleImageUpload = async (files) => {
-    // You can handle image uploads here, e.g., send to your backend API
-    const urls = await Promise.all(Array.from(files).map(uploadImage)); // Replace with your upload logic
-    setFormData((prevData) => ({
-      ...prevData,
-      imageUrls: prevData.imageUrls.concat(urls),
-    }));
+    if (files.length + formData.imageUrls.length > 6) {
+      return setError('You can upload a maximum of 6 images');
+    }
+    
+    setUploadingImages(true);
+    const urls = await Promise.all(Array.from(files).map(uploadImage)).catch(err => {
+      setError('Failed to upload images');
+      setUploadingImages(false);
+    });
+    
+    if (urls) {
+      setFormData((prevData) => ({
+        ...prevData,
+        imageUrls: prevData.imageUrls.concat(urls),
+      }));
+    }
+    setUploadingImages(false);
   };
 
   const uploadImage = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch('/api/upload', {
+    const response = await fetch('https://keyvista.onrender.com/api/upload', {
       method: 'POST',
       body: formData,
     });
 
     const data = await response.json();
     if (data.success) {
-      return data.url; // Adjust based on your API response
+      return data.url;
     } else {
       throw new Error('Image upload failed');
     }
@@ -72,25 +84,27 @@ export default function CreateListing() {
   };
 
   const handleChange = (e) => {
-    const { id, value, checked } = e.target;
-
+    const { id, value, checked, type } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [id]: e.target.type === 'checkbox' ? checked : value,
+      [id]: type === 'checkbox' ? checked : value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (formData.imageUrls.length < 1)
+      if (formData.imageUrls.length < 1) {
         return setError('You must upload at least one image');
-      if (+formData.regularPrice < +formData.discountPrice)
+      }
+      if (+formData.regularPrice < +formData.discountPrice) {
         return setError('Discount price must be lower than regular price');
-      
+      }
+
       setLoading(true);
-      setError(false);
-      const res = await fetch(`/api/listing/update/${params.listingId}`, {
+      setError(null);
+
+      const res = await fetch(`https://keyvista.onrender.com/api/listing/update/${params.listingId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,12 +114,15 @@ export default function CreateListing() {
           userRef: currentUser._id,
         }),
       });
+      
       const data = await res.json();
       setLoading(false);
-      if (data.success === false) {
+      
+      if (!data.success) {
         setError(data.message);
+      } else {
+        navigate(`/listing/${data._id}`);
       }
-      navigate(`/listing/${data._id}`);
     } catch (error) {
       setError(error.message);
       setLoading(false);
@@ -148,8 +165,9 @@ export default function CreateListing() {
           <div className='flex gap-6 flex-wrap'>
             <div className='flex gap-2'>
               <input
-                type='checkbox'
+                type='radio'
                 id='sale'
+                name='type'
                 className='w-5'
                 onChange={handleChange}
                 checked={formData.type === 'sale'}
@@ -158,8 +176,9 @@ export default function CreateListing() {
             </div>
             <div className='flex gap-2'>
               <input
-                type='checkbox'
+                type='radio'
                 id='rent'
+                name='type'
                 className='w-5'
                 onChange={handleChange}
                 checked={formData.type === 'rent'}
@@ -247,7 +266,7 @@ export default function CreateListing() {
                 <input
                   type='number'
                   id='discountPrice'
-                  min='0'
+                  min='50'
                   max='10000000'
                   required
                   className='p-3 border border-gray-300 rounded-lg'
@@ -255,60 +274,43 @@ export default function CreateListing() {
                   value={formData.discountPrice}
                 />
                 <div className='flex flex-col items-center'>
-                  <p>Discounted price</p>
+                  <p>Discount price</p>
                   {formData.type === 'rent' && (
-                    <span className='text-xs'>($ / month)</span>
+                    <span className='text-xs'>(Rs. / month)</span>
                   )}
                 </div>
               </div>
             )}
           </div>
         </div>
-        <div className='flex flex-col flex-1 gap-4'>
-          <p className='font-semibold'>
-            Images:
-            <span className='font-normal text-gray-600 ml-2'>
-              The first image will be the cover (max 6)
-            </span>
-          </p>
-          <div className='flex gap-4'>
-            <input
-              onChange={(e) => handleImageUpload(e.target.files)}
-              className='p-3 border border-gray-300 rounded w-full'
-              type='file'
-              id='images'
-              accept='image/*'
-              multiple
-            />
-          </div>
-          {formData.imageUrls.length > 0 &&
-            formData.imageUrls.map((url, index) => (
-              <div
-                key={url}
-                className='flex justify-between p-3 border items-center'
-              >
-                <img
-                  src={url}
-                  alt='Uploaded'
-                  className='h-24 w-24 object-cover'
-                />
+        <div className='flex flex-col gap-2'>
+          <h2 className='text-center'>Images</h2>
+          <input
+            type='file'
+            accept='image/*'
+            multiple
+            onChange={(e) => handleImageUpload(e.target.files)}
+            disabled={uploadingImages}
+          />
+          <div className='flex gap-2'>
+            {formData.imageUrls.map((url, index) => (
+              <div key={index} className='relative'>
+                <img src={url} alt='Uploaded preview' className='w-20 h-20 object-cover rounded-lg' />
                 <button
-                  className='text-red-600'
+                  type='button'
                   onClick={() => handleRemoveImage(index)}
+                  className='absolute top-0 right-0 bg-red-600 text-white rounded-full p-1'
                 >
-                  Remove
+                  &times;
                 </button>
               </div>
             ))}
-          {error && <p className='text-red-600'>{error}</p>}
-          <button
-            type='submit'
-            className='bg-blue-600 text-white rounded-lg p-3 mt-4'
-            disabled={loading}
-          >
-            {loading ? 'Loading...' : 'Update Listing'}
-          </button>
+          </div>
         </div>
+        {error && <p className='text-red-600'>{error}</p>}
+        <button type='submit' className='bg-blue-600 text-white p-3 rounded-lg'>
+          {loading ? 'Loading...' : 'Update Listing'}
+        </button>
       </form>
     </main>
   );
