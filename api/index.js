@@ -29,7 +29,7 @@ const app = express();
 // CORS configuration: use different origins for development and production
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? 'https://keyvista.onrender.com' // Adjust for production
+    ? 'http://localhost:5000' // Adjust for production
     : 'http://localhost:3000' // Adjust for development
 }));
 
@@ -69,7 +69,7 @@ app.post('/api/uploads', upload.array('images', 6), (req, res) => {
     return res.status(400).json({ success: false, message: 'No files uploaded' });
   }
 
-  const imageUrls = req.files.map(file => `https://keyvista.onrender.com/uploads/${file.filename}`);
+  const imageUrls = req.files.map(file => `http://localhost:5000/uploads/${file.filename}`);
   res.json({ success: true, imageUrls });
 });
 
