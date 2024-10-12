@@ -1,92 +1,140 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import userRouter from './routes/user.route.js';
-import authRouter from './routes/auth.route.js';
-import listingRouter from './routes/listing.route.js';
-import cookieParser from 'cookie-parser';
-import multer from 'multer'; // Use import instead of require
-import cors from 'cors';
-import path from 'path';
-import { errorHandler } from './middleware/errorHandler.js'; // Error handler middleware
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
+import SwiperCore from 'swiper';
+import 'swiper/css/bundle';
+import ListingItem from '../components/ListingItem';
 
-dotenv.config(); // Load environment variables
-const router = express.Router();
-const PORT = process.env.PORT || 5000;
+export default function Home() {
+  const [offerListings, setOfferListings] = useState([]);
+  const [saleListings, setSaleListings] = useState([]);
+  const [rentListings, setRentListings] = useState([]);
+  SwiperCore.use([Navigation]);
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGO)
-  .then(() => {
-    console.log('Connected to MongoDB!');
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+  useEffect(() => {
+    const fetchOfferListings = async () => {
+      try {
+        const res = await fetch('/api/listing/get?offer=true&limit=4');
+        const data = await res.json();
+        setOfferListings(data);
+        await fetchRentListings(); // wait for this to complete
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
-const __dirname = path.resolve(); // Get the current directory
+    const fetchRentListings = async () => {
+      try {
+        const res = await fetch('/api/listing/get?type=rent&limit=4');
+        const data = await res.json(); // Fix: Use the response from the fetch call
+        setRentListings(data);
+        await fetchSaleListings(); // wait for this to complete
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
-const app = express();
+    const fetchSaleListings = async () => {
+      try {
+        const res = await fetch('/api/listing/get?type=sale&limit=4'); // Fix: This should be the sale listings
+        const data = await res.json();
+        setSaleListings(data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
-app.use(cors({
-  origin: 'https://keyvista.onrender.com', // Adjust according to your frontend URL
-}));
+    fetchOfferListings();
+  }, []);
 
-// Middlewares
-app.use(express.json()); // For parsing application/json
-app.use(cookieParser()); // For parsing cookies
+  return (
+    <div>
+      {/* Top Section */}
+      <div className='flex flex-col gap-6 p-28 px-3 max-w-6xl mx-auto'>
+        <h1 className='text-slate-700 font-bold text-3xl lg:text-6xl'>
+          Find your next <span className='text-slate-500'>Destination</span>
+          <br />
+          with ease
+        </h1>
+        <div className='text-gray-400 text-xs sm:text-sm'>
+          KeyVista serves as your ultimate online destination, expertly designed to transform the real estate journey.
+          <br />
+          Whether you aim to purchase, sell, or lease properties, KeyVista offers a vast array of listings tailored to meet your unique preferences.
+        </div>
+        <Link
+          to={'/search'}
+          style={{ color: '#ff0062' }}  // Inline style for color
+          className='text-xs sm:text-sm font-bold hover:underline'
+        >
+          Let's perfect begin...
+        </Link>
+      </div>
 
-// Routes
-app.use('/api/user', userRouter);
-app.use('/api/auth', authRouter);
-app.use('/api/listing', listingRouter);
+      {/* Swiper Section */}
+      <Swiper navigation>
+        {offerListings?.length > 0 && 
+          offerListings.map((listing) => (
+            <SwiperSlide key={listing._id}> {/* Added key prop */}
+              <div
+                style={{
+                  background: `url(${listing.imageUrls[0]}) center no-repeat`,
+                  backgroundSize: 'cover',
+                }}
+                className='h-[500px]'
+              ></div>
+            </SwiperSlide>
+          ))}
+      </Swiper>
 
-// Multer setup for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-      cb(null, 'uploads/'); // Directory where files will be stored
-  },
-  filename: (req, file, cb) => {
-      cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
-  },
-});
-
-const upload = multer({ storage });
-// Inside your Express app definition
-app.post('/api/user/upload', upload.single('avatar'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ success: false, message: 'No file uploaded' });
-  }
-
-  const filePath = `/uploads/${req.file.filename}`; // Adjust if needed
-  res.json({ success: true, filePath });
-});
-
-// API endpoint for file uploads
-app.post('/api/uploads', upload.array('images', 6), (req, res) => {
-  if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ success: false, message: 'No files uploaded' });
-  }
-
-  const imageUrls = req.files.map(file => `https://keyvista.onrender.com/uploads/${file.filename}`);
-  res.json({ success: true, imageUrls });
-});
-
-// Serve static files from the uploads directory
-app.use('/uploads', express.static('uploads'));
-
-// Serve static files for the client
-app.use(express.static(path.join(__dirname, '/client/dist')));
-
-// Catch-all route for SPA (Single Page Application)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'uploads','client', 'dist', 'index.html'));
-});
-
-// Error handler middleware (should be placed after all routes)
-app.use(errorHandler);
-
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}!`);
-});
+      {/* Listing Results */}
+      <div className='max-w-6xl mx-auto p-3 flex flex-col gap-8 my-10'>
+        {offerListings?.length > 0 && (
+          <div>
+            <div className='my-3'>
+              <h2 className='text-2xl font-semibold text-slate-600'>Recent offers</h2>
+              <Link className='text-sm text-blue-800 hover:underline' to={'/search?offer=true'}>Show more offers</Link>
+            </div>
+            <div className='flex flex-wrap gap-4'>
+              {offerListings.map((listing) => (
+                <ListingItem listing={listing} key={listing._id} />
+              ))}
+            </div>
+          </div>
+        )}
+        {rentListings?.length > 0 && (
+          <div>
+            <div className='my-3'>
+              <h2 className='text-2xl font-semibold text-slate-600'>Recent places for rent</h2>
+              <Link className='text-sm text-blue-800 hover:underline' to={'/search?type=rent'}>Show more places for rent</Link>
+            </div>
+            <div className='flex flex-wrap gap-4'>
+              {rentListings.map((listing) => (
+                <ListingItem listing={listing} key={listing._id} />
+              ))}
+            </div>
+          </div>
+        )}
+        {saleListings?.length > 0 && (
+          <div>
+            <div className='my-3'>
+              <h2 className='text-2xl font-semibold text-slate-600'>Recent places for sale</h2>
+              <Link
+                className='text-sm hover:underline'
+                style={{ color: '#ff0062' }} // Inline style for color
+                to={'/search?type=sale'}
+              >
+                Show more places for sale
+              </Link>
+            </div>
+            <div className='flex flex-wrap gap-4'>
+              {saleListings.map((listing) => (
+                <ListingItem listing={listing} key={listing._id} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
