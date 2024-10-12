@@ -81,7 +81,7 @@ app.use(express.static(path.join(__dirname, 'client', 'dist')));
 
 // Catch-all route for Single Page Application
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname, 'uploads','client', 'dist', 'index.html'));
 });
 
 // Error handler middleware (should be placed after all routes)
