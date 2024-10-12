@@ -8,7 +8,7 @@ import ListingItem from '../components/ListingItem';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://your-production-api-url.com' 
-  : 'http://localhost:5000'; // For local development
+  : 'https://keyvista.onrender.com'; // For local development
 
 export default function Home() {
   const [offerListings, setOfferListings] = useState([]);

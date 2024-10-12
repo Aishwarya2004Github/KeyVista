@@ -36,7 +36,7 @@ export default function CreateListing() {
       }
 
       try {
-        const res = await fetch('http://localhost:5000/api/uploads', {
+        const res = await fetch('https://keyvista.onrender.com/api/uploads', {
           method: 'POST',
           body: formDataToUpload,
         });
