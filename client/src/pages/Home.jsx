@@ -6,34 +6,30 @@ import SwiperCore from 'swiper';
 import 'swiper/css/bundle';
 import ListingItem from '../components/ListingItem';
 
-
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://keyvista.onrender.com' 
-  : 'https://keyvista.onrender.com'; // For local development
-
 export default function Home() {
   const [offerListings, setOfferListings] = useState([]);
   const [saleListings, setSaleListings] = useState([]);
   const [rentListings, setRentListings] = useState([]);
   SwiperCore.use([Navigation]);
-  console.log(offerListings);
+
   useEffect(() => {
     const fetchOfferListings = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/listing/get?offer=true&limit=4`);
+        const res = await fetch('/api/listing/get?offer=true&limit=4');
         const data = await res.json();
         setOfferListings(data);
-        fetchRentListings();
+        await fetchRentListings(); // wait for this to complete
       } catch (error) {
         console.log(error);
       }
     };
+
     const fetchRentListings = async () => {
       try {
-        await fetch(`${API_BASE_URL}/api/listing/get?type=rent&limit=4`);
-        const data = await res.json();
+        const res = await fetch('/api/listing/get?type=rent&limit=4');
+        const data = await res.json(); // Fix: Use the response from the fetch call
         setRentListings(data);
-        fetchSaleListings();
+        await fetchSaleListings(); // wait for this to complete
       } catch (error) {
         console.log(error);
       }
@@ -41,62 +37,60 @@ export default function Home() {
 
     const fetchSaleListings = async () => {
       try {
-        const res =  await fetch(`${API_BASE_URL}/api/listing/get?offer=true&limit=4`);
+        const res = await fetch('/api/listing/get?type=sale&limit=4'); // Fix: This should be the sale listings
         const data = await res.json();
         setSaleListings(data);
       } catch (error) {
         console.log(error);
       }
     };
+
     fetchOfferListings();
   }, []);
+
   return (
     <div>
-      {/* top */}
+      {/* Top Section */}
       <div className='flex flex-col gap-6 p-28 px-3 max-w-6xl mx-auto'>
         <h1 className='text-slate-700 font-bold text-3xl lg:text-6xl'>
           Find your next <span className='text-slate-500'>Destination</span>
           <br />
-           with ease
+          with ease
         </h1>
         <div className='text-gray-400 text-xs sm:text-sm'>
-        KeyVista serves as your ultimate online destination, expertly designed to transform the real estate journey. 
+          KeyVista serves as your ultimate online destination, expertly designed to transform the real estate journey.
           <br />
           Whether you aim to purchase, sell, or lease properties, KeyVista offers a vast array of listings tailored to meet your unique preferences.
         </div>
         <Link
-  to={'/search'}
-  style={{ color: '#ff0062' }}  // Add inline style for color
-  className='text-xs sm:text-sm font-bold hover:underline'
->
-  Let's perfect begin...
-</Link>
-
+          to={'/search'}
+          style={{ color: '#ff0062' }}  // Inline style for color
+          className='text-xs sm:text-sm font-bold hover:underline'
+        >
+          Let's perfect begin...
+        </Link>
       </div>
 
-      {/* swiper */}
+      {/* Swiper Section */}
       <Swiper navigation>
-        {offerListings &&
-          offerListings.length > 0 &&
+        {offerListings?.length > 0 && 
           offerListings.map((listing) => (
-            <SwiperSlide>
+            <SwiperSlide key={listing._id}> {/* Added key prop */}
               <div
                 style={{
                   background: `url(${listing.imageUrls[0]}) center no-repeat`,
                   backgroundSize: 'cover',
                 }}
                 className='h-[500px]'
-                key={listing._id}
               ></div>
             </SwiperSlide>
           ))}
       </Swiper>
 
-      {/* listing results for offer, sale and rent */}
-
+      {/* Listing Results */}
       <div className='max-w-6xl mx-auto p-3 flex flex-col gap-8 my-10'>
-        {offerListings && offerListings.length > 0 && (
-          <div className=''>
+        {offerListings?.length > 0 && (
+          <div>
             <div className='my-3'>
               <h2 className='text-2xl font-semibold text-slate-600'>Recent offers</h2>
               <Link className='text-sm text-blue-800 hover:underline' to={'/search?offer=true'}>Show more offers</Link>
@@ -108,8 +102,8 @@ export default function Home() {
             </div>
           </div>
         )}
-        {rentListings && rentListings.length > 0 && (
-          <div className=''>
+        {rentListings?.length > 0 && (
+          <div>
             <div className='my-3'>
               <h2 className='text-2xl font-semibold text-slate-600'>Recent places for rent</h2>
               <Link className='text-sm text-blue-800 hover:underline' to={'/search?type=rent'}>Show more places for rent</Link>
@@ -121,18 +115,17 @@ export default function Home() {
             </div>
           </div>
         )}
-        {saleListings && saleListings.length > 0 && (
-          <div className=''>
+        {saleListings?.length > 0 && (
+          <div>
             <div className='my-3'>
               <h2 className='text-2xl font-semibold text-slate-600'>Recent places for sale</h2>
               <Link
-  className='text-sm hover:underline'
-  style={{ color: '#ff0062' }}  // Add inline style for color
-  to={'/search?type=sale'}
->
-  Show more places for sale
-</Link>
-
+                className='text-sm hover:underline'
+                style={{ color: '#ff0062' }} // Inline style for color
+                to={'/search?type=sale'}
+              >
+                Show more places for sale
+              </Link>
             </div>
             <div className='flex flex-wrap gap-4'>
               {saleListings.map((listing) => (
