@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
+import autoprefixer from 'autoprefixer';
+import tailwindcss from 'tailwindcss'; // Directly import tailwindcss
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -8,11 +10,20 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
-
         secure: false,
       },
     },
   },
-  
-  plugins: [react()],
+  css: {
+    postcss: {
+      plugins: [
+        autoprefixer, // Autoprefixer for CSS
+        tailwindcss // Tailwind CSS as a PostCSS plugin
+      ],
+    },
+  },
+  build: {
+    chunkSizeWarningLimit: 1000, // Set the limit in kilobytes (1 MB)
+  },
+  plugins: [react()], // React plugin
 });
