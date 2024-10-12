@@ -8,7 +8,7 @@ import ListingItem from '../components/ListingItem';
 
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-production-api-url.com' 
+  ? 'https://keyvista.onrender.com' 
   : 'http://localhost:5000'; // For local development
 
 export default function Home() {
