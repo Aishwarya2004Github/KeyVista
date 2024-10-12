@@ -12,6 +12,7 @@ import Listing from './pages/Listing';
 import Search from './pages/Search';
 import Purpose from './pages/Purpose';
 import Contact from './pages/Contact';
+import './index.css'; // Adjust the path as necessary
 
 export default function App() {
   return (
