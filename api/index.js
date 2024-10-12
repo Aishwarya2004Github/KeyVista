@@ -5,12 +5,13 @@ import userRouter from './routes/user.route.js';
 import authRouter from './routes/auth.route.js';
 import listingRouter from './routes/listing.route.js';
 import cookieParser from 'cookie-parser';
-import multer from 'multer'; 
+import multer from 'multer'; // Use import instead of require
 import cors from 'cors';
 import path from 'path';
-import { errorHandler } from './middleware/errorHandler.js'; 
+import { errorHandler } from './middleware/errorHandler.js'; // Error handler middleware
 
 dotenv.config(); // Load environment variables
+const router = express.Router();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
@@ -24,13 +25,11 @@ mongoose
   });
 
 const __dirname = path.resolve(); // Get the current directory
+
 const app = express();
 
-// CORS configuration: use different origins for development and production
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? 'http://localhost:5000' // Adjust for production
-    : 'http://localhost:3000' // Adjust for development
+  origin: 'http://localhost:5000', // Adjust according to your frontend URL
 }));
 
 // Middlewares
@@ -45,16 +44,15 @@ app.use('/api/listing', listingRouter);
 // Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Directory where files will be stored
+      cb(null, 'uploads/'); // Directory where files will be stored
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+      cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
   },
 });
 
 const upload = multer({ storage });
-
-// File upload routes
+// Inside your Express app definition
 app.post('/api/user/upload', upload.single('avatar'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
@@ -64,9 +62,10 @@ app.post('/api/user/upload', upload.single('avatar'), (req, res) => {
   res.json({ success: true, filePath });
 });
 
+// API endpoint for file uploads
 app.post('/api/uploads', upload.array('images', 6), (req, res) => {
   if (!req.files || req.files.length === 0) {
-    return res.status(400).json({ success: false, message: 'No files uploaded' });
+      return res.status(400).json({ success: false, message: 'No files uploaded' });
   }
 
   const imageUrls = req.files.map(file => `http://localhost:5000/uploads/${file.filename}`);
@@ -74,12 +73,12 @@ app.post('/api/uploads', upload.array('images', 6), (req, res) => {
 });
 
 // Serve static files from the uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static('uploads'));
 
 // Serve static files for the client
-app.use(express.static(path.join(__dirname, 'client', 'dist')));
+app.use(express.static(path.join(__dirname, '/client/dist')));
 
-// Catch-all route for Single Page Application
+// Catch-all route for SPA (Single Page Application)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'uploads','client', 'dist', 'index.html'));
 });
