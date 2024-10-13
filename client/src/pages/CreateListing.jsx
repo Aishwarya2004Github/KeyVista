@@ -24,44 +24,46 @@ export default function CreateListing() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
-  
   const handleImageSubmit = async (e) => {
+    e.preventDefault(); // Prevent default form submission
     if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
-      setUploading(true);
-      setImageUploadError(false);
-      const formDataToUpload = new FormData();
+        setUploading(true);
+        setImageUploadError(false);
+        const formDataToUpload = new FormData();
 
-      for (let i = 0; i < files.length; i++) {
-        formDataToUpload.append('images', files[i]);
-      }
-
-      try {
-        const res = await fetch('https://keyvista.onrender.com/api/uploads', {
-          method: 'POST',
-          body: formDataToUpload,
-        });
-        
-        const data = await res.json();
-
-        if (data.success) {
-          setFormData({
-            ...formData,
-            imageUrls: formData.imageUrls.concat(data.imageUrls), // assuming API returns image URLs
-          });
-          setImageUploadError(false);
-        } else {
-          setImageUploadError(data.message || 'Image upload failed');
+        for (let i = 0; i < files.length; i++) {
+            formDataToUpload.append('images', files[i]);
         }
-      } catch (error) {
-        setImageUploadError('Image upload failed');
-      } finally {
-        setUploading(false);
-      }
+
+        try {
+            const res = await fetch('https://keyvista.onrender.com/api/uploads', {
+                method: 'POST',
+                body: formDataToUpload,
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                // Assuming the API returns an array of image URLs
+                setFormData((prevData) => ({
+                    ...prevData,
+                    imageUrls: [...prevData.imageUrls, ...data.imageUrls], // Append new image URLs
+                }));
+                setImageUploadError(false);
+            } else {
+                setImageUploadError(data.message || 'Image upload failed');
+            }
+        } catch (error) {
+            console.error('Upload error:', error); // Log the error for debugging
+            setImageUploadError('Image upload failed due to a network error');
+        } finally {
+            setUploading(false);
+        }
     } else {
-      setImageUploadError('You can only upload 6 images per listing');
-      setUploading(false);
+        setImageUploadError('You can only upload 6 images per listing');
     }
-  };
+};
+
 
   const handleRemoveImage = (index) => {
     setFormData({
