@@ -17,7 +17,7 @@ const ImageUpload = () => {
         });
 
         try {
-            const res = await fetch('/api/uploads', {
+            const res = await fetch('https://keyvista.onrender.com/api/uploads', {
                 method: 'POST',
                 body: formData,
             });

@@ -25,29 +25,43 @@ export default function CreateListing() {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  const handleImageSubmit = async () => {
-    const formData = new FormData();
-    images.forEach(image => {
-      formData.append('images', image); // Make sure the key matches the name used in multer
-    });
-  
-    try {
-      const response = await fetch('https://keyvista.onrender.com/api/uploads', {
-        method: 'POST',
-        body: formData,
-      });
-  
-      const data = await response.json();
-      if (data.success) {
-        console.log('Uploaded images:', data.imageUrls);
-      } else {
-        console.error('Upload failed:', data.message);
+  const handleImageSubmit = async (e) => {
+    if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
+      setUploading(true);
+      setImageUploadError(false);
+      const formDataToUpload = new FormData();
+
+      for (let i = 0; i < files.length; i++) {
+        formDataToUpload.append('images', files[i]);
       }
-    } catch (error) {
-      console.error('Error uploading images:', error);
+
+      try {
+        const res = await fetch('https://keyvista.onrender.com/api/uploads', {
+          method: 'POST',
+          body: formDataToUpload,
+        });
+        
+        const data = await res.json();
+
+        if (data.success) {
+          setFormData({
+            ...formData,
+            imageUrls: formData.imageUrls.concat(data.imageUrls), // assuming API returns image URLs
+          });
+          setImageUploadError(false);
+        } else {
+          setImageUploadError(data.message || 'Image upload failed');
+        }
+      } catch (error) {
+        setImageUploadError('Image upload failed');
+      } finally {
+        setUploading(false);
+      }
+    } else {
+      setImageUploadError('You can only upload 6 images per listing');
+      setUploading(false);
     }
   };
-  
 
   const handleRemoveImage = (index) => {
     setFormData({
