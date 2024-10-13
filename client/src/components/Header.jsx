@@ -44,7 +44,11 @@ export default function Header() {
   };
 
   return (
-    <header className={`shadow-md ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}>
+<header 
+  className={`shadow-md ${isDarkMode ? 'bg-slate-200' : ''}`} 
+  style={{ backgroundColor: isDarkMode ? '#ff6b93' : 'rgba(229, 229, 229, 1)' }} // Light gray background for light mode
+>
+
       <div className='flex justify-between items-center max-w-6xl mx-auto p-3'>
         <Link to='/' className='flex items-center'>
           <img 
