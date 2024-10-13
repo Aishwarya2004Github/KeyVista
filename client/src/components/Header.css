@@ -9,4 +9,39 @@ body {
   }
   
   /* Additional styles for header and other components as needed */
-  
+  /* Header.css */
+
+header {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Light Mode Colors */
+.bg-pink-light {
+  background-color: #f8b3d4; /* Light pink background */
+}
+
+.text-pink-light {
+  color: #4c1d95; /* Dark pink for text */
+}
+
+.text-pink-secondary {
+  color: #c084fc; /* Lighter pink for secondary text */
+}
+
+/* Dark Mode Colors */
+.bg-pink-dark {
+  background-color: #e0194e; /* Darker pink background */
+}
+
+.text-pink-dark {
+  color: #f9fafb; /* Light text for dark mode */
+}
+
+.text-pink-secondary-dark {
+  color: #fa3569; /* Lighter pink for secondary text in dark mode */
+}
+
+/* Additional styles for hover effects */
+.hover\:underline:hover {
+  text-decoration: underline;
+}

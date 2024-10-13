@@ -44,7 +44,7 @@ export default function Header() {
   };
 
   return (
-    <header className={`shadow-md ${isDarkMode ? 'bg-pink-800' : 'bg-pink-200'}`}>
+    <header className={`shadow-md ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'}`}>
       <div className='flex justify-between items-center max-w-6xl mx-auto p-3'>
         <Link to='/' className='flex items-center'>
           <img 
@@ -59,7 +59,7 @@ export default function Header() {
         </Link>
         <form
           onSubmit={handleSubmit}
-          className={`p-3 rounded-lg flex items-center ${isDarkMode ? 'bg-pink-800' : 'bg-slate-100'}`}
+          className={`p-3 rounded-lg flex items-center ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}
         >
           <input
             type='text'
@@ -93,11 +93,11 @@ export default function Header() {
               Contact
             </li>
           </Link>
-          <button onClick={toggleTheme} className={`bg-pink-800 hover:underline ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>
+          <button onClick={toggleTheme} className={`text-slate-700 hover:underline ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>
             {isDarkMode ? 'Light Mode' : 'Dark Mode'}
           </button>
           {/* Fullscreen Toggle Button */}
-          <button onClick={toggleFullscreen} className={`bg-pink-800 hover:underline ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>
+          <button onClick={toggleFullscreen} className={`text-slate-700 hover:underline ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>
             {document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen'}
           </button>
           <Link to='/profile'>
