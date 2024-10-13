@@ -30,6 +30,7 @@ Real Estate Agents: Agents can list properties, manage their listings, and commu
 
 Property Investors: Investors can search for commercial properties or land based on investment goals and location preferences.
 
-![Screenshot (251)](https://github.com/user-attachments/assets/e850fdea-d5ef-47f9-b30c-cf941e71c095)
+![Screenshot (252)](https://github.com/user-attachments/assets/261b4435-75dc-4d56-bbc1-6e81d36cfce0)
+
 
 
