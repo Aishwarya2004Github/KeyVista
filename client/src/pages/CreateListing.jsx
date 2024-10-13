@@ -25,28 +25,30 @@ export default function CreateListing() {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  const handleImageSubmit = async (files) => {
-    if (files.length > 0 && files.length + formData.imageUrls.length <= 6) {
+  const handleImageSubmit = async (e) => {
+    if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
       setUploading(true);
       setImageUploadError(false);
-  
       const formDataToUpload = new FormData();
+
       for (let i = 0; i < files.length; i++) {
         formDataToUpload.append('images', files[i]);
       }
-  
+
       try {
-        const res = await fetch('https://keyvista.onrender.com/api/uploads', {
+        const res = await fetch('https://keyvista.onrender.com/api/images', {
           method: 'POST',
           body: formDataToUpload,
         });
-  
+        
         const data = await res.json();
+
         if (data.success) {
-          setFormData((prev) => ({
-            ...prev,
-            imageUrls: [...prev.imageUrls, ...data.imageUrls], // Append the uploaded image URLs
-          }));
+          setFormData({
+            ...formData,
+            imageUrls: formData.imageUrls.concat(data.imageUrls), // assuming API returns image URLs
+          });
+          setImageUploadError(false);
         } else {
           setImageUploadError(data.message || 'Image upload failed');
         }
@@ -56,11 +58,10 @@ export default function CreateListing() {
         setUploading(false);
       }
     } else {
-      setImageUploadError('You can only upload up to 6 images');
+      setImageUploadError('You can only upload 6 images per listing');
       setUploading(false);
     }
   };
-  
 
   const handleRemoveImage = (index) => {
     setFormData({
