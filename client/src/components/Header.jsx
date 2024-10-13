@@ -46,7 +46,7 @@ export default function Header() {
   return (
 <header 
   className={`shadow-md ${isDarkMode ? 'bg-slate-200' : ''}`} 
-  style={{ backgroundColor: isDarkMode ? '#ff6b93' : 'rgba(229, 229, 229, 1)' }} // Light gray background for light mode
+  style={{ backgroundColor: isDarkMode ? '#ff6b93' : '#ff6b93' }} // Light gray background for light mode
 >
 
       <div className='flex justify-between items-center max-w-6xl mx-auto p-3'>
@@ -54,7 +54,7 @@ export default function Header() {
           <img 
             src='/k.png' // Correct path for logo in the public folder
             alt='KeyVista Logo' 
-            className='mr-2 h-10 w-12' // Adjust height and width as needed
+            className='mr-2 h-12 w-14' // Adjust height and width as needed
           />
           <h1 className={`font-bold text-sm sm:text-xl flex flex-wrap ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
             <span className={`${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Key</span>

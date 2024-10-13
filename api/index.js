@@ -58,7 +58,7 @@ app.post('/api/user/upload', upload.single('avatar'), (req, res) => {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
 
-  const filePath = `/uploads/${req.file.filename}`; // Adjust if needed
+  const filePath = `https://keyvista.onrender.com/uploads/${req.file.filename}`; // Adjust if needed
   res.json({ success: true, filePath });
 });
 
