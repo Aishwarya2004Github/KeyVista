@@ -43,12 +43,14 @@ app.use('/api/listing', listingRouter);
 // Multer setup for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Directory where files will be stored
+    cb(null, path.join(__dirname, 'uploads')); // Ensure absolute path is correct
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+    cb(null, Date.now() + path.extname(file.originalname)); // Ensure unique filenames
   },
 });
+
+
 
 const upload = multer({ storage });
 
@@ -58,11 +60,11 @@ app.post('/api/user/upload', upload.single('avatar'), (req, res) => {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
 
-  const filePath = `https://keyvista.onrender.com/uploads/${req.file.filename}`; // Adjust if needed
+  const filePath = `https://keyvista.onrender.com/uploads/${req.file.filename}`;
   res.json({ success: true, filePath });
 });
 
-// API endpoint for file uploads
+
 app.post('/api/uploads', upload.array('images', 6), (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ success: false, message: 'No files uploaded' });
@@ -71,6 +73,7 @@ app.post('/api/uploads', upload.array('images', 6), (req, res) => {
   const imageUrls = req.files.map(file => `https://keyvista.onrender.com/uploads/${file.filename}`);
   res.json({ success: true, imageUrls });
 });
+
 
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
