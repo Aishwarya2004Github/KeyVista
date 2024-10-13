@@ -24,9 +24,8 @@ export default function CreateListing() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
-
+  
   const handleImageSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission
     if (files.length > 0 && files.length + formData.imageUrls.length < 7) {
       setUploading(true);
       setImageUploadError(false);
@@ -37,35 +36,30 @@ export default function CreateListing() {
       }
 
       try {
-        const res = await fetch('https://keyvista.onrender.com/api/uploads', {
+        const res = await fetch('/api/uploads', {
           method: 'POST',
           body: formDataToUpload,
         });
-        const contentType = res.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          const text = await res.text();
-          throw new Error(`Unexpected response: ${text}`);
-        }
+        
         const data = await res.json();
 
-        if (res.ok && data.success) {
-          // Assuming the API returns an array of image URLs
-          setFormData((prevData) => ({
-            ...prevData,
-            imageUrls: [...prevData.imageUrls, ...data.imageUrls], // Append new image URLs
-          }));
+        if (data.success) {
+          setFormData({
+            ...formData,
+            imageUrls: formData.imageUrls.concat(data.imageUrls), // assuming API returns image URLs
+          });
           setImageUploadError(false);
         } else {
           setImageUploadError(data.message || 'Image upload failed');
         }
       } catch (error) {
-        console.error('Upload error:', error); // Log the error for debugging
-        setImageUploadError('Image upload failed due to a network error');
+        setImageUploadError('Image upload failed');
       } finally {
         setUploading(false);
       }
     } else {
       setImageUploadError('You can only upload 6 images per listing');
+      setUploading(false);
     }
   };
 
@@ -109,7 +103,6 @@ export default function CreateListing() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const updatedData = { ...formData, avatar: formData.avatar || currentUser.avatar };
     try {
       if (formData.imageUrls.length < 1)
         return setError('You must upload at least one image');
@@ -205,7 +198,7 @@ export default function CreateListing() {
                 onChange={handleChange}
                 checked={formData.parking}
               />
-              <span>Parking Spot</span>
+              <span>Parking spot</span>
             </div>
             <div className='flex gap-2'>
               <input
@@ -228,68 +221,108 @@ export default function CreateListing() {
               <span>Offer</span>
             </div>
           </div>
-          <div className='flex gap-4'>
-            <input
-              type='number'
-              placeholder='Regular Price'
-              className='border p-3 rounded-lg'
-              id='regularPrice'
-              required
-              onChange={handleChange}
-              value={formData.regularPrice}
-            />
-            {formData.offer && (
+          <div className='flex flex-wrap gap-6'>
+            <div className='flex items-center gap-2'>
               <input
                 type='number'
-                placeholder='Discount Price'
-                className='border p-3 rounded-lg'
-                id='discountPrice'
+                id='bedrooms'
+                min='1'
+                max='10'
                 required
+                className='p-3 border border-gray-300 rounded-lg'
                 onChange={handleChange}
-                value={formData.discountPrice}
+                value={formData.bedrooms}
               />
+              <p>Beds</p>
+            </div>
+            <div className='flex items-center gap-2'>
+              <input
+                type='number'
+                id='bathrooms'
+                min='1'
+                max='10'
+                required
+                className='p-3 border border-gray-300 rounded-lg'
+                onChange={handleChange}
+                value={formData.bathrooms}
+              />
+              <p>Baths</p>
+            </div>
+            <div className='flex items-center gap-2'>
+              <input
+                type='number'
+                id='regularPrice'
+                min='50'
+                max='10000000'
+                required
+                className='p-3 border border-gray-300 rounded-lg'
+                onChange={handleChange}
+                value={formData.regularPrice}
+              />
+              <div className='flex flex-col items-center'>
+                <p>Regular price</p>
+                {formData.type === 'rent' && (
+                  <span className='text-xs'>($ / month)</span>
+                )}
+              </div>
+            </div>
+            {formData.offer && (
+              <div className='flex items-center gap-2'>
+                <input
+                  type='number'
+                  id='discountPrice'
+                  min='0'
+                  max='10000000'
+                  required
+                  className='p-3 border border-gray-300 rounded-lg'
+                  onChange={handleChange}
+                  value={formData.discountPrice}
+                />
+                <div className='flex flex-col items-center'>
+                  <p>Discounted price</p>
+                  {formData.type === 'rent' && (
+                    <span className='text-xs'>($ / month)</span>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </div>
-        <div className='flex flex-col gap-4'>
-          <label className='cursor-pointer'>
-            <span className='border border-dashed border-gray-500 p-10 rounded-lg flex flex-col justify-center items-center'>
-              <span className='text-lg'>Upload Images (Max 6)</span>
-              <span className='text-gray-400'>{uploading ? 'Uploading...' : 'Click to upload'}</span>
-              <input
-                type='file'
-                multiple
-                className='hidden'
-                onChange={(e) => setFiles(e.target.files)}
-              />
+        <div className='flex flex-col flex-1 gap-4'>
+          <p className='font-semibold'>
+            Images:
+            <span className='font-normal text-gray-600 ml-2'>
+              The first image will be the cover (max 6)
             </span>
-          </label>
-          {imageUploadError && <p className='text-red-500'>{imageUploadError}</p>}
-          <button
-            onClick={handleImageSubmit}
-            className='bg-blue-600 text-white p-3 rounded-lg'>
-            Upload Images
-          </button>
-          <div className='grid grid-cols-2 gap-2'>
-            {formData.imageUrls.map((url, index) => (
+          </p>
+          <div className='flex flex-col gap-2'>
+            {formData.imageUrls.map((imageUrl, index) => (
               <div key={index} className='relative'>
-                <img src={url} alt='Uploaded' className='w-full h-32 object-cover rounded-lg' />
-                <button
-                  className='absolute top-1 right-1 bg-red-600 text-white rounded-full p-1'
-                  onClick={() => handleRemoveImage(index)}>
-                  X
+                <img src={imageUrl} alt={`Listing Image ${index + 1}`} className='h-40 w-full object-cover rounded-lg' />
+                <button onClick={() => handleRemoveImage(index)} className='absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full'>
+                  Remove
                 </button>
               </div>
             ))}
           </div>
+          <input
+            type='file'
+            accept='image/*'
+            className='border p-3 rounded-lg'
+            onChange={(e) => setFiles([...e.target.files])}
+            multiple
+          />
+          <button onClick={handleImageSubmit} className='bg-blue-500 text-white p-2 rounded-lg'>
+            {uploading ? 'Uploading...' : 'Upload Images'}
+          </button>
+          {imageUploadError && <p className='text-red-500'>{imageUploadError}</p>}
+        
+        {error && <p className='text-red-500'>{error}</p>}
+        <button type='submit' className='bg-green-500 text-white p-3 rounded-lg'>
+          {loading ? 'Creating...' : 'Create Listing'}
+        </button>
         </div>
       </form>
-      {error && <p className='text-red-500'>{error}</p>}
-      <button
-        onClick={handleSubmit}
-        className='bg-green-600 text-white p-3 rounded-lg mt-5'>
-        {loading ? 'Creating...' : 'Create Listing'}
-      </button>
     </main>
   );
 }

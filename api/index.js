@@ -57,18 +57,21 @@ app.post('/api/user/upload', upload.single('avatar'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
-  res.status(200).json({ success: true, fileUrl: `/uploads/${req.file.filename}` });
+
+  const filePath = `https://keyvista.onrender.com/uploads/${req.file.filename}`; // Adjust if needed
+  res.json({ success: true, filePath });
 });
 
 // API endpoint for file uploads
 app.post('/api/uploads', upload.array('images', 6), (req, res) => {
   if (!req.files || req.files.length === 0) {
-    return res.status(400).json({ success: false, message: 'No images uploaded' });
+    return res.status(400).json({ success: false, message: 'No files uploaded' });
   }
 
-  const imageUrls = req.files.map(file => `/uploads/${file.filename}`);
-  res.status(200).json({ success: true, imageUrls });
+  const imageUrls = req.files.map(file => `https://keyvista.onrender.com/uploads/${file.filename}`);
+  res.json({ success: true, imageUrls });
 });
+
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
