@@ -68,7 +68,7 @@ app.post('/api/uploads', upload.array('images', 6), (req, res) => {
     return res.status(400).json({ success: false, message: 'No files uploaded' });
   }
 
-  const imageUrls = req.files.map(file => `https://keyvista.onrender.com/uploads/${file.filename}`);
+  const imageUrls = `https://keyvista.onrender.com/uploads/${req.file.filename}`;
   res.json({ success: true, imageUrls });
 });
 
