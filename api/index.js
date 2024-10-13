@@ -76,11 +76,11 @@ app.post('/api/uploads', upload.array('images', 6), (req, res) => {
 app.use('/uploads', express.static('uploads'));
 
 // Serve static files for the client
-app.use(express.static(path.join(__dirname, '/client/dist')));
+app.use(express.static(path.join(__dirname, '/client/dist','uploads')));
 
 // Catch-all route for SPA (Single Page Application)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname,'uploads','client', 'dist', 'index.html'));
 });
 
 // Error handler middleware (should be placed after all routes)
